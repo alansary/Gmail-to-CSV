@@ -29,12 +29,31 @@ status, messages_count = my_mail.select("Inbox")
 if status != "OK":
     exit("Incorrect mail box")
 
+# Load the key and value from yaml file
+with open("config.yml") as f:
+    content = f.read()
+
+config = yaml.load(content, Loader=yaml.FullLoader)
+key, value = config['key'], config['value']
+
+# Search for emails with specific key and value
+_, data = my_mail.search(None, key, value)
+
+# IDs of all emails that we want to fetch 
+mail_id_list = data[0].split()
+
+# Empty list to capture all messages
+msgs = []
+# Iterate through messages and extract data into the msgs list
+for num in mail_id_list:
+    typ, data = my_mail.fetch(num, '(RFC822)') # RFC822 returns whole message (BODY fetches just body)
+    msgs.append(data)
+
 messages = []
-for i in range(1, int(messages_count[0])):
-    res, msg = my_mail.fetch(str(i), "(RFC822)")
-    for response in msg:
-        if isinstance(response, tuple):
-            my_msg = email.message_from_bytes(response[1])
+for i, msg in enumerate(msgs[::-1]):
+    for response_part in msg:
+        if type(response_part) is tuple:
+            my_msg=email.message_from_bytes((response_part[1]))
             # print("_________________________________________")
             message_subject = my_msg["subject"].replace("|", "")
             message_from = my_msg["from"].replace("|", "")
@@ -42,13 +61,12 @@ for i in range(1, int(messages_count[0])):
             # print("from:", message_from)
             # print("body:")
             body = ""
-            for part in my_msg.walk():
-                # print(part.get_content_type())
-                if part.get_content_type() == "text/plain":
+            for part in my_msg.walk():  
+                #print(part.get_content_type())
+                if part.get_content_type() == 'text/plain':
                     # print(part.get_payload())
                     body += part.get_payload()
             body = body.replace("|", "")
-            # print(body)
             message = {
                 "subject": message_subject,
                 "from": message_from,

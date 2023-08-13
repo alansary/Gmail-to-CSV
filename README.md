@@ -19,7 +19,14 @@
     - Enter your password
 
 
-### Extract and save
+### Extract all emails
 ```bash
 python3 extract.py
+```
+
+### Extract emails with filter
+    - Enter the key and value in config.yml
+
+```bash
+python3 extract-with-filter.py
 ```
